@@ -192,11 +192,14 @@ class DiscordTS {
 			};
 		}
 		let { prefix } = this;
-		const guildPrefix = this.db.guilds.get(msg.guild.id).prefix;
-		if (typeof guildPrefix !== 'undefined') {
+		if (msg.channel.type === 'dm') {
+			const guildPrefix = this.db.guilds.get(msg.guild.id).prefix;
+			if (typeof guildPrefix !== 'undefined') {
 			// eslint-disable-next-line prefer-destructuring
-			prefix = this.db.guilds.get(msg.guild.id).prefix;
+				prefix = this.db.guilds.get(msg.guild.id).prefix;
+			}
 		}
+
 
 		if (!msg.content.startsWith(`<@!${this.client.user.id}> `) && !msg.content.startsWith(`${prefix}`)) {
 			// console.log(msg.content);
