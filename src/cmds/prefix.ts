@@ -25,7 +25,7 @@ prefixCommand.run((bot, msg, args) => {
 		if (typeof guildPrefix !== 'undefined') {
 			currentPrefix = guildPrefix || ' ';
 		}
-		return `The current prefix is \`${currentPrefix}\`\n\nThe global prefix is \`${bot.prefix}\` (or a message starting with ${bot.client.user}).\nTo change the prefix, run \`${currentPrefix} prefix_here\``;
+		return `The current prefix is \`${currentPrefix}\`\n\nThe global prefix is \`${bot.prefix}\` (or a message starting with ${bot.client.user}).\nTo change the prefix, run \`${currentPrefix}prefix prefix_here\``;
 	}
 	let prefix = prefixarg.value[0];
 
