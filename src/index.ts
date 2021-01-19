@@ -2,24 +2,31 @@ import { Command } from './Command';
 import defaults from './cmds/index';
 import { Client, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
 import { Arguments } from './Arguments';
+import DBProvider from './providers/DBProvider';
+import JSONProvider from './providers/JSONProvider';
 class DiscordTS {
 	prefix: string
 	owners: string[]
 	client = new Client({ ws: { intents: Intents.ALL } })
 	commands: Command[]
+	db: DBProvider
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, commands: Command[]}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, commands: Command[], db?: string}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
 		this.owners = opts.owners;
 		this.prefix = opts.prefix || '/';
 
+
 		this.commands = [ ...defaults, ...opts.commands ];
 
 		this.client.on('ready', () => {
+			if (typeof opts.db !== 'undefined') {
+				this.db = new JSONProvider(opts.db, this.client.users.cache, this.client.guilds.cache);
+			}
 			this.client.user.setActivity({
 				name: `on ${this.client.guilds.cache.array().length} servers`
 			});
@@ -184,8 +191,14 @@ class DiscordTS {
 				type: 'bot'
 			};
 		}
+		let { prefix } = this;
+		const guildPrefix = this.db.guilds.get(msg.guild.id).prefix;
+		if (typeof guildPrefix !== 'undefined') {
+			// eslint-disable-next-line prefer-destructuring
+			prefix = this.db.guilds.get(msg.guild.id).prefix;
+		}
 
-		if (!msg.content.startsWith(`<@!${this.client.user.id}> `) && !msg.content.startsWith(`${this.prefix}`)) {
+		if (!msg.content.startsWith(`<@!${this.client.user.id}> `) && !msg.content.startsWith(`${prefix}`)) {
 			// console.log(msg.content);
 			return {
 				status: false,
@@ -194,7 +207,7 @@ class DiscordTS {
 			};
 		}
 
-		if (msg.content === this.prefix || msg.content === `<@!${this.client.user.id}>`) {
+		if (msg.content === prefix || msg.content === `<@!${this.client.user.id}>`) {
 			return {
 				status: false,
 				code: 403,
@@ -202,7 +215,7 @@ class DiscordTS {
 			};
 		}
 
-		let starter = this.prefix;
+		let starter = prefix;
 		if (msg.content.startsWith(`<@!${this.client.user.id}> `)) {
 			starter = `<@!${this.client.user.id}> `;
 		}
@@ -346,4 +359,4 @@ class DiscordTS {
 	}
 }
 
-export { DiscordTS, Command };
+export { DiscordTS, Command, JSONProvider };
