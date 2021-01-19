@@ -27,11 +27,12 @@ prefixCommand.run((bot, msg, args) => {
 		}
 		return `The current prefix is \`${currentPrefix}\`\n\nThe global prefix is \`${bot.prefix}\` (or a message starting with ${bot.client.user}).\nTo change the prefix, run \`${currentPrefix}prefix prefix_here\``;
 	}
-	let prefix = prefixarg.value[0];
+	let prefix = prefixarg.value[0].trim();
 
 	if (prefix === '""') {
 		prefix = '';
 	}
+
 
 	try {
 		bot.db.guilds.get(msg.guild.id).prefix = prefix;
