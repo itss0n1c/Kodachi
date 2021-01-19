@@ -192,7 +192,7 @@ class DiscordTS {
 			};
 		}
 		let { prefix } = this;
-		if (msg.channel.type === 'dm') {
+		if (msg.channel.type === 'text') {
 			const guildPrefix = this.db.guilds.get(msg.guild.id).prefix;
 			if (typeof guildPrefix !== 'undefined') {
 			// eslint-disable-next-line prefer-destructuring
