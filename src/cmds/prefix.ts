@@ -18,9 +18,19 @@ prefixCommand.run((bot, msg, args) => {
 	if (!msg.member.hasPermission('ADMINISTRATOR')) {
 		throw 'You\'re not a guild administrator!';
 	}
-	const prefix = args.get('prefix').value;
-	if (typeof prefix === 'undefined' || !prefix.length) {
-		return 'Missing prefix name';
+	const prefixarg = args.get('prefix');
+	if (typeof prefixarg === 'undefined' || !prefixarg.value.length) {
+		const	guildPrefix = bot.db.guilds.get(msg.guild.id).prefix;
+		let currentPrefix = bot.prefix;
+		if (typeof guildPrefix !== 'undefined') {
+			currentPrefix = guildPrefix || ' ';
+		}
+		return `The current prefix is \`${currentPrefix}\`\n\nThe global prefix is \`${bot.prefix}\` (or a message starting with ${bot.client.user}).\nTo change the prefix, run \`${currentPrefix} prefix_here\``;
+	}
+	let prefix = prefixarg.value[0];
+
+	if (prefix === '""') {
+		prefix = '';
 	}
 
 	try {
@@ -30,7 +40,7 @@ prefixCommand.run((bot, msg, args) => {
 		throw 'Failed to update prefix!';
 	}
 
-	return 'Prefix updated.';
+	return `Prefix updated to \`${prefix || ' '}\`.`;
 });
 
 export default prefixCommand;
