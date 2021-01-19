@@ -12,5 +12,5 @@
 		"downlevelIteration": true,
 		"esModuleInterop": true
 	},
-	"exclude": ["tests/"]
+	"exclude": ["tests/", "dist/"]
 }

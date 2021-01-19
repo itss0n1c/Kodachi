@@ -7,6 +7,7 @@ class DiscordTS {
 	owners: string[]
 	client = new Client({ ws: { intents: Intents.ALL } })
 	commands: Command[]
+	// eslint-disable-next-line no-undef
 	[k: string]: any
 
 	constructor(token: string, opts: {owners: string[], prefix?: string, commands: Command[]}) {

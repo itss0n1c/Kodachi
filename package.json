@@ -1,7 +1,7 @@
 {
   "name": "@itss0n1c/discord-ts",
-  "version": "1.0.4",
-  "main": "dist/index.ts",
+  "version": "1.0.5",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
   "author": "S0n1c",
