@@ -1,9 +1,13 @@
 {
   "name": "@itss0n1c/discord-ts",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.ts",
+  "types": "dist/index.d.ts",
   "license": "MIT",
   "author": "S0n1c",
+  "scripts": {
+    "build": "tsc -p ."
+  },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/node": "^14.14.7",
