@@ -348,8 +348,10 @@ class DiscordTS {
 				}
 			}
 
-			console.log(str.length - 1, processed);
-			console.log(char, opened, found);
+			/*
+			 * 	console.log(str.length - 1, processed);
+			 * 	console.log(char, opened, found);
+			 */
 
 			processed++;
 		}
