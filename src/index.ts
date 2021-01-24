@@ -72,6 +72,12 @@ class DiscordTS {
 			}
 		});
 
+
+		this.client.on('guildCreate', () => {
+			this.db.init({ users: this.client.users.cache,
+				guilds: this.client.guilds.cache });
+		});
+
 		this.client.login(token);
 	}
 
@@ -120,7 +126,7 @@ class DiscordTS {
 		const fixargs = new Arguments();
 		if (cmd.arguments.length > 0 && args.length > 0) {
 			if (cmd.arguments.length > 1) {
-				if (cmd.arguments.filter(arg => arg.unlimited).length > 0) {
+				if (cmd.arguments.filter(arg => arg.unlimited).length > 1) {
 					throw 'There can only be one `unlimited` argument.';
 				}
 				if (cmd.arguments[0].unlimited) {
