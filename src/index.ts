@@ -171,7 +171,12 @@ class DiscordTS {
 		console.log(fixargs);
 		let hook: Webhook;
 		if (msg.channel.type === 'text') {
-			hook = await this.loadHook(msg);
+			try {
+				hook = await this.loadHook(msg);
+			} catch (e) {
+				console.error(e);
+				hook = null;
+			}
 		} else {
 			hook = null;
 		}
