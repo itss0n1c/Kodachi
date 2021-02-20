@@ -15,7 +15,7 @@ const prefixCommand = new Command({
 });
 
 prefixCommand.run((bot, msg, args) => {
-	if (!msg.member.hasPermission('ADMINISTRATOR')) {
+	if (!msg.member.permissions.has('ADMINISTRATOR')) {
 		throw 'You\'re not a guild administrator!';
 	}
 	const prefixarg = args.get('prefix');

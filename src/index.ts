@@ -7,7 +7,7 @@ import JSONProvider from './providers/JSONProvider';
 class DiscordTS {
 	prefix: string
 	owners: string[]
-	client = new Client({ ws: { intents: Intents.ALL } })
+	client = new Client({ intents: Intents.ALL })
 	commands: Command[]
 	db: DBProvider
 	// eslint-disable-next-line no-undef
