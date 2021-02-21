@@ -4,6 +4,7 @@ import { Client, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
 import { Arguments } from './Arguments';
 import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
+import { inspect } from 'util';
 class DiscordTS {
 	prefix: string
 	owners: string[]
@@ -36,31 +37,34 @@ class DiscordTS {
 		this.client.on('message', async (message) => {
 			const parsed = this.parseMessage(message);
 			console.log(parsed);
+
 			if (parsed.status) {
-				let res: string | MessageEmbed | Message;
+				message.reply(`\`\`\`js\n${inspect(parsed)}\`\`\``);
+				return;
 
-
-				try {
-					res = await this.run(message, parsed.cmd, parsed.args);
-				} catch (e) {
-					if (e === 404) {
-						return;
-					}
-					console.log({ tag: message.author.tag,
-						server: (message.guild ? message.guild.name : message.author.tag) });
-					console.log(e);
-					this.send(e, message, true);
-					return;
-				}
-				console.log('name', res.constructor.name);
-				if (typeof res === 'string') {
-					return this.send(res, message);
-				}
-				if (res.constructor.name === 'MessageEmbed') {
-					return this.send(res as MessageEmbed, message);
-				} else if (res.constructor.name === 'Message') {
-					return;
-				}
+				// eslint-disable-next-line multiline-comment-style
+				// let res: string | MessageEmbed | Message;
+				// try {
+				// 	res = await this.run(message, parsed.cmd, parsed.args);
+				// } catch (e) {
+				// 	if (e === 404) {
+				// 		return;
+				// 	}
+				// 	console.log({ tag: message.author.tag,
+				// 		server: (message.guild ? message.guild.name : message.author.tag) });
+				// 	console.log(e);
+				// 	this.send(e, message, true);
+				// 	return;
+				// }
+				// console.log('name', res.constructor.name);
+				// if (typeof res === 'string') {
+				// 	return this.send(res, message);
+				// }
+				// if (res.constructor.name === 'MessageEmbed') {
+				// 	return this.send(res as MessageEmbed, message);
+				// } else if (res.constructor.name === 'Message') {
+				// 	return;
+				// }
 			}
 			switch (parsed.type) {
 				case 'bad-cmd':
@@ -294,7 +298,7 @@ class DiscordTS {
 		let found = '';
 		let processed = 0;
 		let opener_char = '';
-		const resolveOC = opener => {
+		const resolveOC = (opener: string) => {
 			if (opens.includes(opener)) {
 				if (opener === '“') {
 					return '”';
@@ -325,7 +329,8 @@ class DiscordTS {
 			}
 			return found;
 		};
-		for (const char of str) {
+		for (const i in [ ...str ]) {
+			const char = str[i];
 			if (!opened) {
 				if (opens.includes(char)) {
 					opened = true;
@@ -333,6 +338,7 @@ class DiscordTS {
 				}
 
 				if (char === ' ') {
+					console.log('fuck');
 					if (found.trim() !== '') {
 						parsed.push(fixNumbers(found));
 					}
@@ -359,10 +365,13 @@ class DiscordTS {
 				}
 			}
 
-			/*
-			 * 	console.log(str.length - 1, processed);
-			 * 	console.log(char, opened, found);
-			 */
+
+			console.log(str.length - 1, processed);
+			console.log(char, opened, found, processed);
+
+
+			console.log(parsed);
+
 
 			processed++;
 		}
