@@ -56,4 +56,8 @@ export default class GuildSettings implements GuildSettingsData {
 		this[k] = v;
 		return this;
 	}
+
+	get(k: string): any {
+		return this.rawdata[k];
+	}
 }
