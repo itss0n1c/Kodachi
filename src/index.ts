@@ -4,7 +4,7 @@ import { Client, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
 import { Arguments } from './Arguments';
 import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
-import { inspect } from 'util';
+
 class DiscordTS {
 	prefix: string
 	owners: string[]
@@ -39,32 +39,34 @@ class DiscordTS {
 			console.log(parsed);
 
 			if (parsed.status) {
-				message.reply(`\`\`\`js\n${inspect(parsed)}\`\`\``);
-				return;
+				/*
+				 * message.reply(`\`\`\`js\n${inspect(parsed)}\`\`\``);
+				 * return;
+				 */
 
 				// eslint-disable-next-line multiline-comment-style
-				// let res: string | MessageEmbed | Message;
-				// try {
-				// 	res = await this.run(message, parsed.cmd, parsed.args);
-				// } catch (e) {
-				// 	if (e === 404) {
-				// 		return;
-				// 	}
-				// 	console.log({ tag: message.author.tag,
-				// 		server: (message.guild ? message.guild.name : message.author.tag) });
-				// 	console.log(e);
-				// 	this.send(e, message, true);
-				// 	return;
-				// }
-				// console.log('name', res.constructor.name);
-				// if (typeof res === 'string') {
-				// 	return this.send(res, message);
-				// }
-				// if (res.constructor.name === 'MessageEmbed') {
-				// 	return this.send(res as MessageEmbed, message);
-				// } else if (res.constructor.name === 'Message') {
-				// 	return;
-				// }
+				let res: string | MessageEmbed | Message;
+				try {
+					res = await this.run(message, parsed.cmd, parsed.args);
+				} catch (e) {
+					if (e === 404) {
+						return;
+					}
+					console.log({ tag: message.author.tag,
+						server: (message.guild ? message.guild.name : message.author.tag) });
+					console.log(e);
+					this.send(e, message, true);
+					return;
+				}
+				console.log('name', res.constructor.name);
+				if (typeof res === 'string') {
+					return this.send(res, message);
+				}
+				if (res.constructor.name === 'MessageEmbed') {
+					return this.send(res as MessageEmbed, message);
+				} else if (res.constructor.name === 'Message') {
+					return;
+				}
 			}
 			switch (parsed.type) {
 				case 'bad-cmd':

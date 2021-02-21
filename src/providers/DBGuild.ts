@@ -32,7 +32,7 @@ export default class GuildSettings implements GuildSettingsData {
 			props[k] = {
 				get: () => this.rawdata[k],
 				set: (v: any) => {
-					this.rawdata.prefix = v;
+					this.rawdata[k] = v;
 					db.update();
 				},
 				enumerable: true
@@ -40,5 +40,20 @@ export default class GuildSettings implements GuildSettingsData {
 		}
 
 		Object.defineProperties(this, props);
+	}
+
+	set(k: string, v: unknown): this {
+		if (typeof this.rawdata[k] === 'undefined') {
+			Object.defineProperty(this, k, {
+				get: () => this.rawdata[k],
+				set: (v: any) => {
+					this.rawdata[k] = v;
+					this.db.update();
+				},
+				enumerable: true
+			});
+		}
+		this[k] = v;
+		return this;
 	}
 }
