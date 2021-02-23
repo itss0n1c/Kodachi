@@ -1,12 +1,12 @@
 import { config } from 'dotenv';
-import DiscordTS from '../src';
+import Kodachi from '../src';
 import { join } from 'path';
 import randomShit from './plugins';
 
 
 config();
 
-new DiscordTS(process.env.TOKEN, {
+new Kodachi(process.env.TOKEN, {
 	prefix: '!',
 	owners: [ '211160171945263105' ],
 	plugins: [ randomShit ],

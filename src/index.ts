@@ -7,7 +7,7 @@ import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
 import { Plugin, Plugins } from './Plugin';
 
-class DiscordTS {
+class Kodachi {
 	prefix: string
 	owners: string[]
 	client = new Client({ intents: Intents.ALL })
@@ -112,7 +112,7 @@ class DiscordTS {
 			try {
 				res = await msg.channel.send('', content);
 			} catch (e) {
-				await this.send(content, msg, true);
+				return this.send(content, msg, true);
 			}
 		}
 		return res;
@@ -429,6 +429,6 @@ class DiscordTS {
 	}
 }
 
-export default DiscordTS;
+export default Kodachi;
 export { Command, Plugin, JSONProvider, DBProvider };
 export * from 'discord.js';

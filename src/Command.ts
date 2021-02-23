@@ -2,13 +2,13 @@
 
 import { Message, Client, MessageEmbed, Webhook, PermissionString } from 'discord.js';
 import { Arguments } from './Arguments';
-import DiscordTS from '.';
+import Kodachi from '.';
 import { Plugin } from './Plugin';
 import { CmdEnv } from './CmdEnv';
 
 
 interface CommandResponse {
-	(bot: typeof DiscordTS.prototype, msg?: Message, args?: Arguments, env?: CmdEnv): Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
+	(bot: typeof Kodachi.prototype, msg?: Message, args?: Arguments, env?: CmdEnv): Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
 }
 
 interface MessageWithHook extends Message {
@@ -29,7 +29,7 @@ export class Command {
 	ownerOnly: boolean;
 	hasPerm: PermissionString[] = []
 	description: string;
-	response: (bot: DiscordTS, msg?: Message, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
+	response: (bot: Kodachi, msg?: Message, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
 
 	constructor(info: {
 		name: string;
@@ -56,7 +56,7 @@ export class Command {
 	}
 
 	async run(
-		cb: (bot: typeof DiscordTS.prototype, msg?: MessageWithHook, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message
+		cb: (bot: typeof Kodachi.prototype, msg?: MessageWithHook, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message
 	): Promise<CommandResponse> {
 		this.response = cb;
 
@@ -64,7 +64,7 @@ export class Command {
 	}
 
 
-	async handler(bot: typeof DiscordTS.prototype, msg: Message, hook: Webhook, args: Arguments, env: CmdEnv): Promise<string | MessageEmbed | Message> {
+	async handler(bot: typeof Kodachi.prototype, msg: Message, hook: Webhook, args: Arguments, env: CmdEnv): Promise<string | MessageEmbed | Message> {
 		console.log(this);
 		// eslint-disable-next-line no-useless-call
 		const newMsg: any = msg;
