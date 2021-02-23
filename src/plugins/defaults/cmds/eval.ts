@@ -1,4 +1,4 @@
-import { Command } from '../Command';
+import { Command } from '../../../Command';
 import { inspect } from 'util';
 
 const evalCommand = new Command({
@@ -9,13 +9,13 @@ const evalCommand = new Command({
 		{
 			name: 'js',
 			unlimited: true,
-			typeof: 'string',
+			typeof: 'any',
 			optional: false
 		}
 	]
 });
 
-evalCommand.run(async (bot, msg, args) => {
+evalCommand.run(async (bot, msg, args, env) => {
 	const js = args.get('js').value;
 	if (typeof js === 'undefined' || !js.length) {
 		return 'Missing js input to evaluate';
@@ -24,8 +24,9 @@ evalCommand.run(async (bot, msg, args) => {
 
 	let run: string;
 	try {
-		run = await Object.getPrototypeOf((async () => '')).constructor('bot', 'msg', 'args', `return ${script}`)(bot, msg, args);
+		run = await Object.getPrototypeOf((async () => '')).constructor('bot', 'msg', 'args', 'env', `return ${script}`)(bot, msg, args, env);
 	} catch (e) {
+		console.error(e);
 		run = e;
 	}
 

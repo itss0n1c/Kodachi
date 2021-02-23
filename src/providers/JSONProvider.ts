@@ -2,14 +2,14 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import DBProvider from './DBProvider';
 import { Collection, Guild, User } from 'discord.js';
 import UserSettings from './DBUser';
-import GuildSettings from './DBGuild';
+import GuildSettings, { GuildSettingsData } from './DBGuild';
 
 interface JSONDBData {
 	users: {
 		[user: string]: any
 	}
 	guilds: {
-		[guild: string]: any
+		[guild: string]: GuildSettingsData
 	}
 }
 
@@ -33,7 +33,7 @@ export default class JSONProvider extends DBProvider {
 		}
 
 		for (const guild of collections.guilds.array()) {
-			this.guilds.set(guild.id, new GuildSettings({}, this));
+			this.guilds.set(guild.id, new GuildSettings({ id: guild.id }, this));
 		}
 
 		const data: JSONDBData = JSON.parse(readFileSync(this.path, { encoding: 'utf-8' }));
@@ -43,15 +43,38 @@ export default class JSONProvider extends DBProvider {
 		}
 		for (const id of Object.keys(data.guilds)) {
 			const guild = data.guilds[id];
-			this.guilds.set(id, new GuildSettings(guild, this));
+			this.guilds.set(id, new GuildSettings({ ...guild,
+				id: this.guilds.get(id).id }, this));
 		}
 	}
 
 	update(): void {
+		// console.log(this.guilds.get('802950865291968582'));
 		const data: JSONDBData = {
 			users: this.users.keyArray(),
 			guilds: this.guilds.keyArray()
 		};
-		writeFileSync(this.path, JSON.stringify(data, null, 4), { encoding: 'utf-8' });
+
+		const notempty: JSONDBData = {
+			users: {},
+			guilds: {}
+		};
+
+		for (const id of Object.keys(data.guilds)) {
+			const guild = data.guilds[id];
+			if (Object.keys(guild).length > 0) {
+				notempty.guilds[id] = guild;
+			}
+		}
+
+		for (const id of Object.keys(data.users)) {
+			const user = data.users[id];
+			if (Object.keys(user).length > 0) {
+				notempty.users[id] = user;
+			}
+		}
+
+		// console.log(data.guilds);
+		writeFileSync(this.path, JSON.stringify(notempty, null, 4), { encoding: 'utf-8' });
 	}
 }

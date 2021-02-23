@@ -1,4 +1,4 @@
-import { Command } from '..';
+import { Command } from '../../..';
 
 const prefixCommand = new Command({
 	name: 'prefix',
@@ -11,13 +11,11 @@ const prefixCommand = new Command({
 			unlimited: false,
 			typeof: 'string'
 		}
-	]
+	],
+	hasPerm: [ 'MANAGE_GUILD' ]
 });
 
-prefixCommand.run((bot, msg, args) => {
-	if (!msg.member.permissions.has('ADMINISTRATOR')) {
-		throw 'You\'re not a guild administrator!';
-	}
+prefixCommand.run((bot, msg, args, env) => {
 	const prefixarg = args.get('prefix');
 	if (typeof prefixarg === 'undefined' || !prefixarg.value.length) {
 		const	guildPrefix = bot.db.guilds.get(msg.guild.id).prefix;
@@ -36,13 +34,7 @@ prefixCommand.run((bot, msg, args) => {
 		prefix = '';
 	}
 
-
-	try {
-		bot.db.guilds.get(msg.guild.id).prefix = prefix;
-	} catch (e) {
-		console.log(e);
-		throw 'Failed to update prefix!';
-	}
+	env.guildSettings.set('prefix', prefix);
 
 	return `Prefix updated to \`${prefix || ' '}\`.`;
 });

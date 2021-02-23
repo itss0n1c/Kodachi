@@ -1,12 +1,14 @@
 /* eslint-disable no-unused-vars */
 
-import { Message, Client, MessageEmbed, Webhook } from 'discord.js';
+import { Message, Client, MessageEmbed, Webhook, PermissionString } from 'discord.js';
 import { Arguments } from './Arguments';
-import { DiscordTS } from '.';
+import DiscordTS from '.';
+import { Plugin } from './Plugin';
+import { CmdEnv } from './CmdEnv';
 
 
 interface CommandResponse {
-	(bot: typeof DiscordTS.prototype, msg?: Message, args?: Arguments): Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
+	(bot: typeof DiscordTS.prototype, msg?: Message, args?: Arguments, env?: CmdEnv): Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
 }
 
 interface MessageWithHook extends Message {
@@ -15,7 +17,7 @@ interface MessageWithHook extends Message {
 
 export class Command {
 	client: Client;
-
+	plugin: Plugin
 	arguments: {
 		name: string
 		unlimited: boolean
@@ -25,8 +27,9 @@ export class Command {
 
 	name: string;
 	ownerOnly: boolean;
+	hasPerm: PermissionString[] = []
 	description: string;
-	response: (bot: DiscordTS, msg?: Message, args?: Arguments) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
+	response: (bot: DiscordTS, msg?: Message, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
 
 	constructor(info: {
 		name: string;
@@ -37,18 +40,23 @@ export class Command {
 			unlimited: boolean;
 			typeof: 'string' | 'number' | 'BigInt' | 'boolean' | 'any' | any[];
 			optional: boolean;
-		}[];
+		}[],
+		hasPerm?: PermissionString[]
 	}) {
 		this.name = info.name;
 		this.ownerOnly = info.ownerOnly;
 		this.arguments = info.arguments;
 		this.description = info.description;
+		if (typeof info.hasPerm !== 'undefined') {
+			this.hasPerm = info.hasPerm;
+		}
+
 		// eslint-disable-next-line no-unused-expressions
 		this.response;
 	}
 
 	async run(
-		cb: (bot: typeof DiscordTS.prototype, msg?: MessageWithHook, args?: Arguments) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message
+		cb: (bot: typeof DiscordTS.prototype, msg?: MessageWithHook, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message
 	): Promise<CommandResponse> {
 		this.response = cb;
 
@@ -56,13 +64,17 @@ export class Command {
 	}
 
 
-	async handler(bot: typeof DiscordTS.prototype, msg: Message, hook: Webhook, args: Arguments): Promise<string | MessageEmbed | Message> {
+	async handler(bot: typeof DiscordTS.prototype, msg: Message, hook: Webhook, args: Arguments, env: CmdEnv): Promise<string | MessageEmbed | Message> {
 		console.log(this);
 		// eslint-disable-next-line no-useless-call
 		const newMsg: any = msg;
 		newMsg.hook = hook;
 
-		return this.response(bot, newMsg, args);
+		if (typeof this.response === 'undefined') {
+			throw `Command \`${this.name}\` has no response handler!`;
+		}
+
+		return this.response(bot, newMsg, args, env);
 	}
 
 	cleanMD(str: string): string {

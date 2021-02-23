@@ -1,4 +1,4 @@
-import { Command } from '..';
+import { Command } from '../../..';
 
 const typeofCommand = new Command({
 	name: 'typeof',

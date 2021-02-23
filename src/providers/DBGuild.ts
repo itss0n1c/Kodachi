@@ -1,63 +1,59 @@
 /* eslint-disable no-undef */
 import DBProvider from './DBProvider';
+import { PluginExported, PluginSettings } from './PluginSettings';
+
 
 export interface GuildSettingsData {
+	id?: string
 	prefix?: string
+	plugins?: PluginExported[]
 	[k: string]: any
 }
 
 export default class GuildSettings implements GuildSettingsData {
+	id: string
 	db: DBProvider
 	prefix: string
-	private rawdata: GuildSettingsData
+	ps: PluginSettings
+	plugins: PluginExported[];
 	[k: string]: any
 
 	constructor(guild: GuildSettingsData, db: DBProvider) {
+		// console.log(guild);
 		Object.defineProperty(this, 'db', {
 			value: db,
 			configurable: true,
 			writable: true
 		});
 
-		const props: PropertyDescriptorMap & ThisType<any> = {};
-
-		Object.defineProperty(this, 'rawdata', {
-			value: guild,
+		Object.defineProperty(this, 'id', {
+			value: guild.id,
 			configurable: true,
 			writable: true
 		});
 
 
 		for (const k of Object.keys(guild)) {
-			props[k] = {
-				get: () => this.rawdata[k],
-				set: (v: any) => {
-					this.rawdata[k] = v;
-					db.update();
-				},
-				enumerable: true
-			};
+			this[k] = guild[k];
 		}
 
-		Object.defineProperties(this, props);
+		Object.defineProperty(this, 'ps', {
+			value: new PluginSettings(this, this.plugins),
+			configurable: true,
+			writable: true
+		});
 	}
 
 	set(k: string, v: unknown): this {
-		if (typeof this.rawdata[k] === 'undefined') {
-			Object.defineProperty(this, k, {
-				get: () => this.rawdata[k],
-				set: (v: any) => {
-					this.rawdata[k] = v;
-					this.db.update();
-				},
-				enumerable: true
-			});
+		if (typeof this[k] === 'undefined' || this[k] !== v) {
+			this[k] = v;
+			console.log(k, v);
+			console.log('saving to db');
+			this.db.update();
+			return this;
 		}
+		console.log('BLAH', k, v);
 		this[k] = v;
 		return this;
-	}
-
-	get(k: string): any {
-		return this.rawdata[k];
 	}
 }

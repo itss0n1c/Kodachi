@@ -1,20 +1,23 @@
 import { Command } from './Command';
-import defaults from './cmds/index';
+import defaultPlugin from './plugins/defaults';
+import miscPlugin from './plugins/misc';
 import { Client, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
 import { Arguments } from './Arguments';
 import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
+import { Plugin, Plugins } from './Plugin';
 
 class DiscordTS {
 	prefix: string
 	owners: string[]
 	client = new Client({ intents: Intents.ALL })
-	commands: Command[]
+	// commands: Command[]
+	plugins: Plugins
 	db: DBProvider
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, commands: Command[], db?: string}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], db?: string}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
@@ -22,11 +25,17 @@ class DiscordTS {
 		this.prefix = opts.prefix || '/';
 
 
-		this.commands = [ ...defaults, ...opts.commands ];
-
 		this.client.on('ready', () => {
 			if (typeof opts.db !== 'undefined') {
 				this.db = new JSONProvider(opts.db, this.client.users.cache, this.client.guilds.cache);
+				console.log('Db loaded');
+				this.plugins = new Plugins(this.db);
+				this.plugins.set(defaultPlugin.name, defaultPlugin);
+				this.plugins.set(miscPlugin.name, miscPlugin);
+				for (const plugin of opts.plugins) {
+				//	console.log(plugin);
+					this.plugins.set(plugin.name, plugin);
+				}
 			}
 			this.client.user.setActivity({
 				name: `on ${this.client.guilds.cache.array().length} servers`
@@ -39,18 +48,14 @@ class DiscordTS {
 			console.log(parsed);
 
 			if (parsed.status) {
-				/*
-				 * message.reply(`\`\`\`js\n${inspect(parsed)}\`\`\``);
-				 * return;
-				 */
-
-				// eslint-disable-next-line multiline-comment-style
 				let res: string | MessageEmbed | Message;
 				try {
 					res = await this.run(message, parsed.cmd, parsed.args);
 				} catch (e) {
 					if (e === 404) {
 						return;
+					} else if (e === 403) {
+						return this.send('This command is in a plugin that is diabled', message, true);
 					}
 					console.log({ tag: message.author.tag,
 						server: (message.guild ? message.guild.name : message.author.tag) });
@@ -98,9 +103,17 @@ class DiscordTS {
 			if (error) {
 				embed.setTitle('Error!');
 			}
-			res = await msg.channel.send('', embed);
+			try {
+				res = await msg.channel.send('', embed);
+			} catch (e) {
+				msg.reply('Can\'t send a message, probably too big');
+			}
 		} else {
-			res = await msg.channel.send('', content);
+			try {
+				res = await msg.channel.send('', content);
+			} catch (e) {
+				await this.send(content, msg, true);
+			}
 		}
 		return res;
 	}
@@ -120,13 +133,39 @@ class DiscordTS {
 	}
 
 	async run(msg: Message, cmd_name: string, args: string[]): Promise<string | MessageEmbed | Message> {
-		const cmd = this.commands.find(c => c.name === cmd_name);
+		const plugin = this.plugins.find(p => p.commands.has(cmd_name));
+		if (typeof plugin === 'undefined') {
+			throw 404;
+		}
+		const settings = this.db.guilds.get(msg.guild.id);
+		if (settings.ps.has(plugin.name)) {
+			if (!settings.ps.get(plugin.name)) {
+				throw 403;
+			}
+		}
+
+		if (plugin.hasPerm.length > 0) {
+			for (const perm of plugin.hasPerm) {
+				if (!msg.member.permissions.has(perm)) {
+					throw `You are missing the ${perm} permission!`;
+				}
+			}
+		}
+		const cmd = plugin.commands.get(cmd_name);
+		//	const cmd = this.commands.find(c => c.name === cmd_name);
 		if (typeof cmd === 'undefined') {
 			throw 404;
 		}
 		if (cmd.ownerOnly) {
 			if (!this.owners.includes(msg.author.id)) {
 				throw `You aren't allowed to run the command \`${cmd_name}\``;
+			}
+		}
+		if (cmd.hasPerm.length > 0) {
+			for (const perm of cmd.hasPerm) {
+				if (!msg.member.permissions.has(perm)) {
+					throw `You are missing the ${perm} permission!`;
+				}
 			}
 		}
 		const fixargs = new Arguments();
@@ -187,7 +226,11 @@ class DiscordTS {
 			hook = null;
 		}
 
-		return cmd.handler(this, msg, hook, fixargs);
+		return cmd.handler(this, msg, hook, fixargs, {
+			cmd,
+			guildSettings: this.db.guilds.get(msg.guild.id),
+			userSettings: this.db.users.get(msg.author.id)
+		});
 
 		// return cmd.handler(this, msg, args);
 	}
@@ -212,7 +255,7 @@ class DiscordTS {
 		if (msg.channel.type === 'text') {
 			const guildPrefix = this.db.guilds.get(msg.guild.id).prefix;
 			if (typeof guildPrefix !== 'undefined') {
-			// eslint-disable-next-line prefer-destructuring
+				// eslint-disable-next-line prefer-destructuring
 				prefix = this.db.guilds.get(msg.guild.id).prefix;
 			}
 		}
@@ -386,4 +429,6 @@ class DiscordTS {
 	}
 }
 
-export { DiscordTS, Command, JSONProvider };
+export default DiscordTS;
+export { Command, Plugin, JSONProvider, DBProvider };
+export * from 'discord.js';
