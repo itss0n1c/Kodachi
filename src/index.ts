@@ -374,7 +374,7 @@ class Kodachi {
 			}
 			return found;
 		};
-		for (const i in [ ...str ]) {
+		for (const i in str as any) {
 			const char = str[i];
 			if (!opened) {
 				if (opens.includes(char)) {
