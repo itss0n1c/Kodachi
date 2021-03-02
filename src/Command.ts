@@ -29,6 +29,7 @@ export class Command {
 	ownerOnly: boolean;
 	hasPerm: PermissionString[] = []
 	description: string;
+	disabled: boolean
 	response: (bot: Kodachi, msg?: Message, args?: Arguments, env?: CmdEnv) => Promise<string | MessageEmbed | Message> | string | MessageEmbed | Message;
 
 	constructor(info: {
@@ -50,6 +51,8 @@ export class Command {
 		if (typeof info.hasPerm !== 'undefined') {
 			this.hasPerm = info.hasPerm;
 		}
+
+		this.disabled = false;
 
 		// eslint-disable-next-line no-unused-expressions
 		this.response;

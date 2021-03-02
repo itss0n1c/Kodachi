@@ -18,7 +18,7 @@ class Kodachi {
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], customHelp?: boolean, tint?: ColorResolvable, db?: string}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], cmdBlackList?: string[], tint?: ColorResolvable, db?: string}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
@@ -32,8 +32,14 @@ class Kodachi {
 				console.log('Db loaded');
 				this.plugins = new Plugins(this.db);
 				this.plugins.set(defaultPlugin.name, defaultPlugin);
-				const misc = miscPlugin(opts.customHelp || false);
-				this.plugins.set(misc.name, misc);
+				this.plugins.set(miscPlugin.name, miscPlugin);
+				if (typeof opts.cmdBlackList !== 'undefined' && opts.cmdBlackList.length > 0) {
+					for (const c of opts.cmdBlackList) {
+						const plugin = this.plugins.find(p => p.commands.has(c));
+						const cmd = plugin.commands.get(c);
+						cmd.disabled = true;
+					}
+				}
 				for (const plugin of opts.plugins) {
 				//	console.log(plugin);
 					this.plugins.set(plugin.name, plugin);
@@ -163,6 +169,9 @@ class Kodachi {
 		const cmd = plugin.commands.get(cmd_name);
 		//	const cmd = this.commands.find(c => c.name === cmd_name);
 		if (typeof cmd === 'undefined') {
+			throw 404;
+		}
+		if (cmd.disabled) {
 			throw 404;
 		}
 		if (cmd.ownerOnly) {
