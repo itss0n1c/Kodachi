@@ -1,7 +1,7 @@
 import { Command } from './Command';
 import defaultPlugin from './plugins/defaults';
 import miscPlugin from './plugins/misc';
-import { Client, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
+import { Client, ColorResolvable, Intents, Message, MessageEmbed, Webhook } from 'discord.js';
 import { Arguments } from './Arguments';
 import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
@@ -14,16 +14,17 @@ class Kodachi {
 	// commands: Command[]
 	plugins: Plugins
 	db: DBProvider
+	tint: ColorResolvable
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], customHelp?: boolean, db?: string}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], customHelp?: boolean, tint?: ColorResolvable, db?: string}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
 		this.owners = opts.owners;
 		this.prefix = opts.prefix || '/';
-
+		this.tint = opts.tint || '#007aff';
 
 		this.client.on('ready', () => {
 			if (typeof opts.db !== 'undefined') {
@@ -105,7 +106,7 @@ class Kodachi {
 			embed.setDescription(content);
 			embed.setTimestamp();
 			embed.setFooter(msg.author.tag, msg.author.displayAvatarURL({ format: 'png' }));
-			embed.setColor(error ? 'RED' : '#007aff');
+			embed.setColor(error ? 'RED' : this.tint);
 			if (error) {
 				embed.setTitle('Error!');
 			}
