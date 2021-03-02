@@ -25,7 +25,8 @@ export default class JSONProvider extends DBProvider {
 
 	init(collections: {users: Collection<string, User>, guilds: Collection<string, Guild>}): void {
 		if (!existsSync(this.path)) {
-			throw 'Path does not exist!';
+			writeFileSync(this.path, JSON.stringify({ users: {},
+				guilds: {} }, null, 4), { encoding: 'utf-8' });
 		}
 
 		for (const user of collections.users.array()) {
