@@ -17,7 +17,7 @@ class Kodachi {
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], db?: string}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], customHelp?: boolean, db?: string}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
@@ -31,7 +31,8 @@ class Kodachi {
 				console.log('Db loaded');
 				this.plugins = new Plugins(this.db);
 				this.plugins.set(defaultPlugin.name, defaultPlugin);
-				this.plugins.set(miscPlugin.name, miscPlugin);
+				const misc = miscPlugin(opts.customHelp || false);
+				this.plugins.set(misc.name, misc);
 				for (const plugin of opts.plugins) {
 				//	console.log(plugin);
 					this.plugins.set(plugin.name, plugin);
@@ -63,11 +64,16 @@ class Kodachi {
 					this.send(e, message, true);
 					return;
 				}
-				console.log('name', res.constructor.name);
+
+				if (res === null || typeof res === 'undefined') {
+					return;
+				}
+
 				if (typeof res === 'string') {
 					return this.send(res, message);
 				}
 				if (res.constructor.name === 'MessageEmbed') {
+					console.log('name', res.constructor.name);
 					return this.send(res as MessageEmbed, message);
 				} else if (res.constructor.name === 'Message') {
 					return;
@@ -145,9 +151,11 @@ class Kodachi {
 		}
 
 		if (plugin.hasPerm.length > 0) {
-			for (const perm of plugin.hasPerm) {
-				if (!msg.member.permissions.has(perm)) {
-					throw `You are missing the ${perm} permission!`;
+			if (!this.owners.includes(msg.author.id)) {
+				for (const perm of plugin.hasPerm) {
+					if (!msg.member.permissions.has(perm)) {
+						throw `You are missing the ${perm} permission!`;
+					}
 				}
 			}
 		}
@@ -162,9 +170,11 @@ class Kodachi {
 			}
 		}
 		if (cmd.hasPerm.length > 0) {
-			for (const perm of cmd.hasPerm) {
-				if (!msg.member.permissions.has(perm)) {
-					throw `You are missing the ${perm} permission!`;
+			if (!this.owners.includes(msg.author.id)) {
+				for (const perm of cmd.hasPerm) {
+					if (!msg.member.permissions.has(perm)) {
+						throw `You are missing the ${perm} permission!`;
+					}
 				}
 			}
 		}

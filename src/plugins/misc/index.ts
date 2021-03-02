@@ -4,10 +4,14 @@ import helpCommand from './cmds/help';
 import pingCommand from './cmds/ping';
 import typeofCommand from './cmds/typeof';
 
-const miscPlugin = new Plugin({
-	name: 'misc',
-	description: 'Collection of basic built in commands',
-	commands: [ echoCommand, typeofCommand, helpCommand, pingCommand ]
-});
-
-export default miscPlugin;
+export default function(customHelp = false): Plugin {
+	const cmds = [ echoCommand, typeofCommand, pingCommand ];
+	if (!customHelp) {
+		cmds.push(helpCommand);
+	}
+	return new Plugin({
+		name: 'misc',
+		description: 'Collection of basic built in commands',
+		commands: cmds
+	});
+}
