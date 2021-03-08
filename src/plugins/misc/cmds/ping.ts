@@ -8,6 +8,6 @@ const pingCommand = new Command({
 	arguments: []
 });
 
-pingCommand.run(async (bot, msg) => `🏓 Latency is ${Date.now() - msg.createdTimestamp}ms. API Latency is ${Math.round(bot.client.ws.ping)}ms`);
+pingCommand.run(async (bot, msg, args, env) => `🏓 Latency is ${env.calledAt - msg.createdTimestamp}ms. API Latency is ${Math.round(bot.client.ws.ping)}ms`);
 
 export default pingCommand;

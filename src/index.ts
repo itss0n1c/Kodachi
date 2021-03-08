@@ -7,10 +7,12 @@ import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
 import { Plugin, Plugins } from './Plugin';
 
+interface ParserRes {status: boolean, code: number, type: string, cmd?: string, args?: string[], message?: string}
+
 class Kodachi {
 	prefix: string
 	owners: string[]
-	client = new Client({ intents: Intents.ALL })
+	client: Client
 	// commands: Command[]
 	plugins: Plugins
 	db: DBProvider
@@ -18,13 +20,18 @@ class Kodachi {
 	// eslint-disable-next-line no-undef
 	[k: string]: any
 
-	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], cmdBlackList?: string[], tint?: ColorResolvable, db?: string}) {
+	constructor(token: string, opts: {owners: string[], prefix?: string, plugins: Plugin[], cmdBlackList?: string[], tint?: ColorResolvable, db?: string, allIntents?: boolean}) {
 		if (typeof token === 'undefined') {
 			throw 'No token set.';
 		}
 		this.owners = opts.owners;
 		this.prefix = opts.prefix || '/';
 		this.tint = opts.tint || '#007aff';
+		if (typeof opts.allIntents !== 'undefined' && opts.allIntents) {
+			this.client = new Client({ intents: Intents.ALL });
+		} else {
+			this.client = new Client({ intents: [ 'GUILDS', 'GUILD_MESSAGES', 'GUILD_EMOJIS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGE_REACTIONS' ] });
+		}
 
 		this.client.on('ready', () => {
 			if (typeof opts.db !== 'undefined') {
@@ -52,48 +59,7 @@ class Kodachi {
 		});
 
 		this.client.on('message', async (message) => {
-			const parsed = this.parseMessage(message);
-			console.log(parsed);
-
-			if (parsed.status) {
-				let res: string | MessageEmbed | Message;
-				try {
-					res = await this.run(message, parsed.cmd, parsed.args);
-				} catch (e) {
-					if (e === 404) {
-						return;
-					} else if (e === 403) {
-						return this.send('This command is in a plugin that is diabled', message, true);
-					}
-					console.log({ tag: message.author.tag,
-						server: (message.guild ? message.guild.name : message.author.tag) });
-					console.log(e);
-					this.send(e, message, true);
-					return;
-				}
-
-				if (res === null || typeof res === 'undefined') {
-					return;
-				}
-
-				if (typeof res === 'string') {
-					return this.send(res, message);
-				}
-				if (res.constructor.name === 'MessageEmbed') {
-					console.log('name', res.constructor.name);
-					return this.send(res as MessageEmbed, message);
-				} else if (res.constructor.name === 'Message') {
-					return;
-				}
-			}
-			switch (parsed.type) {
-				case 'bad-cmd':
-					message.reply('That command name isn\'t valid');
-					break;
-				case 'parsing-error':
-					this.send(`\`\`\`${parsed.message}\`\`\``, message);
-					break;
-			}
+			await this.handleMessage(message);
 		});
 
 
@@ -103,6 +69,59 @@ class Kodachi {
 		});
 
 		this.client.login(token);
+	}
+
+	async handleMessage(message: Message): Promise<Message> {
+		const seq = Date.now();
+		console.time(`parser-${seq}`);
+		const parsed = this.parseMessage(message);
+		console.log(parsed);
+		console.timeEnd(`parser-${seq}`);
+
+		if (parsed.status) {
+			return this.handleResponse(message, parsed);
+		}
+		switch (parsed.type) {
+			case 'bad-cmd':
+				message.reply('That command name isn\'t valid');
+				break;
+			case 'parsing-error':
+				this.send(`\`\`\`${parsed.message}\`\`\``, message);
+				break;
+		}
+	}
+
+	async handleResponse(message: Message, parsed: ParserRes): Promise<Message> {
+		const seq = Date.now();
+		console.time(`cmd-res-${seq}`);
+		let res: string | MessageEmbed | Message;
+		try {
+			res = await this.run(message, parsed.cmd, parsed.args);
+		} catch (e) {
+			if (e === 404) {
+				return;
+			} else if (e === 403) {
+				return this.send('This command is in a plugin that is diabled', message, true);
+			}
+			console.log({ tag: message.author.tag,
+				server: (message.guild ? message.guild.name : message.author.tag) });
+			console.log(e);
+			this.send(e, message, true);
+			return;
+		}
+		console.timeEnd(`cmd-res-${seq}`);
+
+		if (res === null || typeof res === 'undefined') {
+			return;
+		}
+
+		if (typeof res === 'string') {
+			return this.send(res, message);
+		}
+		if (res.constructor.name === 'MessageEmbed') {
+			console.log('name', res.constructor.name);
+			return this.send(res as MessageEmbed, message);
+		}
 	}
 
 	async send(content: string | MessageEmbed, msg: Message, error = false): Promise<Message> {
@@ -117,15 +136,16 @@ class Kodachi {
 				embed.setTitle('Error!');
 			}
 			try {
-				res = await msg.channel.send('', embed);
+				res = await msg.channel.send('', { embed });
 			} catch (e) {
 				msg.reply('Can\'t send a message, probably too big');
 			}
 		} else {
 			try {
-				res = await msg.channel.send('', content);
+				res = await msg.channel.send('', { embed: content });
 			} catch (e) {
-				return this.send(content, msg, true);
+				console.error(e);
+				return this.send('Failed to send embed.', msg, true);
 			}
 		}
 		return res;
@@ -146,7 +166,17 @@ class Kodachi {
 	}
 
 	async run(msg: Message, cmd_name: string, args: string[]): Promise<string | MessageEmbed | Message> {
-		const plugin = this.plugins.find(p => p.commands.has(cmd_name));
+		const seq = Date.now();
+		let plugin: Plugin;
+		for (const p of this.plugins.array()) {
+			if (p.commands.has(cmd_name)) {
+				console.log(cmd_name, p.name, p.commands.get(cmd_name));
+				if (!p.commands.get(cmd_name).disabled) {
+					plugin = p;
+				}
+			}
+		}
+
 		if (typeof plugin === 'undefined') {
 			throw 404;
 		}
@@ -167,7 +197,6 @@ class Kodachi {
 			}
 		}
 		const cmd = plugin.commands.get(cmd_name);
-		//	const cmd = this.commands.find(c => c.name === cmd_name);
 		if (typeof cmd === 'undefined') {
 			throw 404;
 		}
@@ -249,13 +278,14 @@ class Kodachi {
 		return cmd.handler(this, msg, hook, fixargs, {
 			cmd,
 			guildSettings: this.db.guilds.get(msg.guild.id),
-			userSettings: this.db.users.get(msg.author.id)
+			userSettings: this.db.users.get(msg.author.id),
+			calledAt: seq
 		});
 
 		// return cmd.handler(this, msg, args);
 	}
 
-	parseMessage(msg: Message): {status: boolean, code: number, type: string, cmd?: string, args?: string[], message?: string} {
+	parseMessage(msg: Message): ParserRes {
 		if (msg.author.id === this.client.user.id) {
 			return {
 				status: false,

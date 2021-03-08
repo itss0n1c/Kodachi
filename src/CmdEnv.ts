@@ -6,4 +6,5 @@ export interface CmdEnv {
 	cmd: Command
 	guildSettings: GuildSettings
 	userSettings: UserSettings
+	calledAt: number
 }
