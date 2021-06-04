@@ -1,17 +1,8 @@
 {
     "users": {},
     "guilds": {
-        "744006904958812210": {
-            "plugins": [
-                {
-                    "name": "misc",
-                    "enabled": true
-                },
-                {
-                    "name": "randomshit",
-                    "enabled": true
-                }
-            ]
+        "732329840610377728": {
+            "prefix": "$"
         }
     }
 }

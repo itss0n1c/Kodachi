@@ -28,9 +28,13 @@ class Kodachi {
 		this.prefix = opts.prefix || '/';
 		this.tint = opts.tint || '#007aff';
 		if (typeof opts.allIntents !== 'undefined' && opts.allIntents) {
-			this.client = new Client({ intents: Intents.ALL });
+			this.client = new Client({ ws: {
+				intents: Intents.ALL
+			} });
 		} else {
-			this.client = new Client({ intents: [ 'GUILDS', 'GUILD_MESSAGES', 'GUILD_EMOJIS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGE_REACTIONS' ] });
+			this.client = new Client({ ws: {
+				intents: [ 'GUILDS', 'GUILD_MESSAGES', 'GUILD_EMOJIS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MESSAGE_REACTIONS' ]
+			} });
 		}
 
 		this.client.on('ready', () => {
