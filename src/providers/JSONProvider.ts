@@ -15,8 +15,12 @@ interface JSONDBData {
 
 export default class JSONProvider extends DBProvider {
 	path: string
+	dontSave: boolean
 	constructor(path: string, users: Collection<string, User>, guilds: Collection<string, Guild>) {
 		super();
+		if (path === null) {
+			this.dontSave = true;
+		}
 		this.path = path;
 		console.log(this.path);
 		this.init({ users,
@@ -24,10 +28,13 @@ export default class JSONProvider extends DBProvider {
 	}
 
 	init(collections: {users: Collection<string, User>, guilds: Collection<string, Guild>}): void {
-		if (!existsSync(this.path)) {
-			writeFileSync(this.path, JSON.stringify({ users: {},
-				guilds: {} }, null, 4), { encoding: 'utf-8' });
+		if (!this.dontSave) {
+			if (!existsSync(this.path)) {
+				writeFileSync(this.path, JSON.stringify({ users: {},
+					guilds: {} }, null, 4), { encoding: 'utf-8' });
+			}
 		}
+
 
 		for (const user of collections.users.array()) {
 			this.users.set(user.id, new UserSettings({}, this));
@@ -37,15 +44,17 @@ export default class JSONProvider extends DBProvider {
 			this.guilds.set(guild.id, new GuildSettings({ id: guild.id }, this));
 		}
 
-		const data: JSONDBData = JSON.parse(readFileSync(this.path, { encoding: 'utf-8' }));
-		for (const id of Object.keys(data.users)) {
-			const user = data.users[id];
-			this.users.set(id, new UserSettings(user, this));
-		}
-		for (const id of Object.keys(data.guilds)) {
-			const guild = data.guilds[id];
-			this.guilds.set(id, new GuildSettings({ ...guild,
-				id: this.guilds.get(id).id }, this));
+		if (!this.dontSave) {
+			const data: JSONDBData = JSON.parse(readFileSync(this.path, { encoding: 'utf-8' }));
+			for (const id of Object.keys(data.users)) {
+				const user = data.users[id];
+				this.users.set(id, new UserSettings(user, this));
+			}
+			for (const id of Object.keys(data.guilds)) {
+				const guild = data.guilds[id];
+				this.guilds.set(id, new GuildSettings({ ...guild,
+					id: this.guilds.get(id).id }, this));
+			}
 		}
 	}
 
@@ -74,8 +83,8 @@ export default class JSONProvider extends DBProvider {
 				notempty.users[id] = user;
 			}
 		}
-
-		// console.log(data.guilds);
-		writeFileSync(this.path, JSON.stringify(notempty, null, 4), { encoding: 'utf-8' });
+		if (!this.dontSave) {
+			writeFileSync(this.path, JSON.stringify(notempty, null, 4), { encoding: 'utf-8' });
+		}
 	}
 }

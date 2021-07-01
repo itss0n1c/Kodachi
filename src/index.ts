@@ -15,7 +15,7 @@ class Kodachi {
 	client: Client
 	// commands: Command[]
 	plugins: Plugins
-	db: DBProvider
+	db: JSONProvider
 	tint: ColorResolvable
 	// eslint-disable-next-line no-undef
 	[k: string]: any
@@ -41,21 +41,24 @@ class Kodachi {
 			if (typeof opts.db !== 'undefined') {
 				this.db = new JSONProvider(opts.db, this.client.users.cache, this.client.guilds.cache);
 				console.log('Db loaded');
-				this.plugins = new Plugins(this.db);
-				this.plugins.set(defaultPlugin.name, defaultPlugin);
-				this.plugins.set(miscPlugin.name, miscPlugin);
-				if (typeof opts.cmdBlackList !== 'undefined' && opts.cmdBlackList.length > 0) {
-					for (const c of opts.cmdBlackList) {
-						const plugin = this.plugins.find(p => p.commands.has(c));
-						const cmd = plugin.commands.get(c);
-						cmd.disabled = true;
-					}
-				}
-				for (const plugin of opts.plugins) {
-				//	console.log(plugin);
-					this.plugins.set(plugin.name, plugin);
+			} else {
+				this.db = new JSONProvider(null, this.client.users.cache, this.client.guilds.cache);
+			}
+			this.plugins = new Plugins(this.db);
+			this.plugins.set(defaultPlugin.name, defaultPlugin);
+			this.plugins.set(miscPlugin.name, miscPlugin);
+			if (typeof opts.cmdBlackList !== 'undefined' && opts.cmdBlackList.length > 0) {
+				for (const c of opts.cmdBlackList) {
+					const plugin = this.plugins.find(p => p.commands.has(c));
+					const cmd = plugin.commands.get(c);
+					cmd.disabled = true;
 				}
 			}
+			for (const plugin of opts.plugins) {
+				//	console.log(plugin);
+				this.plugins.set(plugin.name, plugin);
+			}
+
 			this.client.user.setActivity({
 				name: `on ${this.client.guilds.cache.array().length} servers`
 			});

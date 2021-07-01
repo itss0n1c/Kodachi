@@ -1,16 +1,14 @@
 import { config } from 'dotenv';
 import Kodachi from '../src';
-import { join } from 'path';
 import randomShit from './plugins';
 
 
 config();
 
 new Kodachi(process.env.TOKEN, {
-	prefix: '!',
+	prefix: 'k/',
 	owners: [ '211160171945263105' ],
-	plugins: [ randomShit ],
-	db: join(__dirname, 'data.json')
+	plugins: [ randomShit ]
 });
 
 /*
