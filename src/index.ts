@@ -6,6 +6,7 @@ import { Arguments } from './Arguments';
 import DBProvider from './providers/DBProvider';
 import JSONProvider from './providers/JSONProvider';
 import { Plugin, Plugins } from './Plugin';
+import GuildSettings from './providers/DBGuild';
 
 interface ParserRes {status: boolean, code: number, type: string, cmd?: string, args?: string[], message?: string}
 
@@ -284,10 +285,16 @@ class Kodachi {
 		} else {
 			hook = null;
 		}
+		let guildSettings: GuildSettings;
+		if (msg.channel.type !== 'dm') {
+			guildSettings = this.db.guilds.get(msg.guild.id);
+		} else {
+			guildSettings = null;
+		}
 
 		return cmd.handler(this, msg, hook, fixargs, {
 			cmd,
-			guildSettings: this.db.guilds.get(msg.guild.id),
+			guildSettings,
 			userSettings: this.db.users.get(msg.author.id),
 			calledAt: seq
 		});
