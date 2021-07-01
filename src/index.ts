@@ -187,12 +187,15 @@ class Kodachi {
 		if (typeof plugin === 'undefined') {
 			throw 404;
 		}
-		const settings = this.db.guilds.get(msg.guild.id);
-		if (settings.ps.has(plugin.name)) {
-			if (!settings.ps.get(plugin.name)) {
-				throw 403;
+		if (msg.channel.type !== 'dm') {
+			const settings = this.db.guilds.get(msg.guild.id);
+			if (settings.ps.has(plugin.name)) {
+				if (!settings.ps.get(plugin.name)) {
+					throw 403;
+				}
 			}
 		}
+
 
 		if (plugin.hasPerm.length > 0) {
 			if (!this.owners.includes(msg.author.id)) {
